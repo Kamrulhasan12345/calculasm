@@ -17,7 +17,8 @@ section .bss
 ; I've to convert num1 and num2 to integer
 ; and I'll also need to convert num3 to ascii later
 ; after that I can actually print something
-
+; https://stackoverflow.com/a/12386915/12352926 has a good implementation of itoa
+; https://www.geeksforgeeks.org/write-your-own-atoi/ a good implementation of atoi
 
 section .text
 	global _start
@@ -32,16 +33,13 @@ _start:
 	syscall
 
 _printAnswer:
-	mov rax, [num3]
-
-_toAscii:
-	div 10
-	add rdx, 48
+	mov rdi, [num3]
+	mov rsi, buffer
+	mov rdx, 10
+	call itoa
 	
-
-_printRDX:
-	mov 
-	
+	mov rax, buffer
+	call _print	
 
 _doOprs:
 	mov rax, [num1]
@@ -63,7 +61,7 @@ _doOprs:
 	cmp bl, 37
 	je _mod
 
-	mov dword [num3], rax
+	mov dword [num3], eax
 	
 	ret
 
@@ -94,7 +92,7 @@ _div:
 	ret
 
 _mod:
-	call _division
+	call _div
 	mov rax, rdx
 
 	ret
@@ -117,12 +115,18 @@ _initNums:
 	
 	mov rbx, num1
 	call _getNum
+	mov rdi, rbx
+	call atoi
+	mov dword [num1], eax
 
 	mov rax, prompt2
 	call _print
 	
 	mov rbx, num2
 	call _getNum
+	mov rdi, rbx
+	call atoi
+	mov dword [num2], eax
 
 	ret
 	
@@ -155,3 +159,67 @@ _printLoop:
 	syscall
 
 	ret
+
+itoa:
+  cmp rdi, 0
+  jge _itoa_pos
+  neg rdi ; convert negative to positive
+  mov byte [rsi], '-' store the first byte as negative
+  mov rbx, 1
+_itoa_pos:
+  mov rbx, 0
+_itoa_div:
+  mov rdx, 0
+  mov rax, rdi
+  mov ecx, 10
+  div ecx
+  cmp rdx, 0
+  je _itoa_zero
+  add rdx, '0'
+  mov [rsi + rbx], rdx
+  inc rbx
+  jmp _itoa_div
+_itoa_zero:
+  inc rbx
+  mov byte [rsi + rbx], 0
+  
+  ret
+
+atoi:
+    ; Initialize result and sign
+    xor rax, rax  ; res = 0
+    mov rdx, 1    ; sign = 1
+    xor rcx, rcx  ; i = 0
+
+    ; Check for negative sign
+    movzx rsi, byte [rdi]
+    cmp rsi, '-'
+    jne .loop_start
+    mov rdx, -1
+    inc rcx  ; Skip '-'
+
+.loop_start:
+    movzx rsi, byte [rdi+rcx]
+    cmp rsi, '\0'
+    je .end
+
+    ; Check if character is a digit
+    cmp rsi, '0'
+    jl .end
+    cmp rsi, '9'
+    jg .end
+
+    ; Convert digit to integer and update result
+    sub rsi, '0'
+    imul rax, 10
+    add rax, rsi
+    inc rcx
+
+    ; Check for overflow (optional)
+    ; ...
+
+    jmp .loop_start
+
+.end:
+    imul rax, rdx  ; Apply sign
+    ret
