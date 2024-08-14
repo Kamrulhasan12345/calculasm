@@ -53,6 +53,7 @@ _itoa_div:
   add rdx, '0'
   mov [rsi + rbx], rdx
   inc rbx
+  mov rdi, rax
   jmp _itoa_div
 _itoa_zero:
   inc rbx
