@@ -2,6 +2,7 @@ section .data
 	prompt db "Enter an operation (from +, -, *, /, %): ", 10, 0
 	prompt1 db "Enter number 1: ", 10, 0
 	prompt2 db "Enter number 2: ", 10, 0
+	answer db "The result of the calculation is: ", 10, 0
 	buffer times 16 db 0
 
 section .bss
@@ -19,6 +20,8 @@ section .bss
 ; after that I can actually print something
 ; https://stackoverflow.com/a/12386915/12352926 has a good implementation of itoa
 ; https://www.geeksforgeeks.org/write-your-own-atoi/ a good implementation of atoi
+; I'll add a printReverse function also, in order to print the reverse of a string
+; serious bug for _itoa_pos and _atoi_neg, move their position to avoid running them by mistake
 
 section .text
 	global _start
@@ -161,29 +164,30 @@ _printLoop:
 	ret
 
 itoa:
-  cmp rdi, 0
-  jge _itoa_pos
-  neg rdi ; convert negative to positive
-  mov byte [rsi], '-' store the first byte as negative
-  mov rbx, 1
+	cmp rdi, 0
+	jge _itoa_pos
+	neg rdi ; convert negative to positive
+	mov byte [rsi], '-' ;store the first byte as negative
+	mov rbx, 1
 _itoa_pos:
-  mov rbx, 0
+	mov rbx, 0
 _itoa_div:
-  mov rdx, 0
-  mov rax, rdi
-  mov ecx, 10
-  div ecx
-  cmp rdx, 0
-  je _itoa_zero
-  add rdx, '0'
-  mov [rsi + rbx], rdx
-  inc rbx
-  jmp _itoa_div
+	mov rdx, 0
+	mov rax, rdi
+	mov ecx, 10
+	div ecx
+	cmp rdx, 0
+	je _itoa_zero
+	add rdx, '0'
+	mov [rsi + rbx], rdx
+	inc rbx
+	mov rdi, rax
+	jmp _itoa_div
 _itoa_zero:
-  inc rbx
-  mov byte [rsi + rbx], 0
-  
-  ret
+	inc rbx
+	mov byte [rsi + rbx], 0
+
+	ret
 
 atoi:
     ; Initialize result and sign

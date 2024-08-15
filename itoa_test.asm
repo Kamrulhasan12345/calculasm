@@ -1,5 +1,5 @@
 section .data
-	num dd 12345
+	num dd -12345
 	buf times 16 db 0
 
 section .text
@@ -11,6 +11,10 @@ _start:
 	
 	mov rax, buf
 	call _print
+
+	mov rax, 60
+	mov rdi, 0
+	syscall
 	
 _print:
         push rax
