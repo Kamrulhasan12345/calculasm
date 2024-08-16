@@ -5,7 +5,7 @@ section .data
 section .text
 	global _start
 _start:
-	mov rdi, [num]
+	movsxd rdi, [num]
 	mov rsi, buf
 	call itoa
 	
@@ -45,6 +45,7 @@ itoa:
   neg rdi ; convert negative to positive
   mov byte [rsi], '-' ;store the first byte as negative
   mov rbx, 1
+  jmp _itoa_div
 _itoa_pos:
   mov rbx, 0
 _itoa_div:

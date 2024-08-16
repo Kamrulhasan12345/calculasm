@@ -1,7 +1,7 @@
 section .data
-	prompt db "Enter an operation (from +, -, *, /, %): ", 10, 0
-	prompt1 db "Enter number 1: ", 10, 0
-	prompt2 db "Enter number 2: ", 10, 0
+	prompt db "Enter an operation (from +, -, *, /, %): ", 0
+	prompt1 db "Enter number 1: ", 0
+	prompt2 db "Enter number 2: ", 0
 	answer db "The result of the calculation is: ", 10, 0
 	buffer times 16 db 0
 
@@ -22,6 +22,9 @@ section .bss
 ; https://www.geeksforgeeks.org/write-your-own-atoi/ a good implementation of atoi
 ; I'll add a printReverse function also, in order to print the reverse of a string
 ; serious bug for _itoa_pos and _atoi_neg, move their position to avoid running them by mistake
+; was able to successfully test itoa and atoi functions somehow
+; looks like there are some problems regarding _doOprs, I'll be sure to check them out later
+
 
 section .text
 	global _start
@@ -31,7 +34,7 @@ _start:
 	call _doOprs
 	call _printAnswer
 
-	mov rax, 60
+	mov rax, 6
 	mov rdx, 0
 	syscall
 
@@ -116,7 +119,7 @@ _initNums:
 	mov rax, prompt1
 	call _print
 	
-	mov rbx, num1
+	mov rbx, buffer
 	call _getNum
 	mov rdi, rbx
 	call atoi
@@ -125,7 +128,7 @@ _initNums:
 	mov rax, prompt2
 	call _print
 	
-	mov rbx, num2
+	mov rbx, buffer
 	call _getNum
 	mov rdi, rbx
 	call atoi
@@ -169,6 +172,7 @@ itoa:
 	neg rdi ; convert negative to positive
 	mov byte [rsi], '-' ;store the first byte as negative
 	mov rbx, 1
+	jmp _itoa_div
 _itoa_pos:
 	mov rbx, 0
 _itoa_div:
@@ -190,40 +194,28 @@ _itoa_zero:
 	ret
 
 atoi:
-    ; Initialize result and sign
-    xor rax, rax  ; res = 0
-    mov rdx, 1    ; sign = 1
-    xor rcx, rcx  ; i = 0
+        mov rax, 0
+	mov rcx, 0
+        cmp byte [rdi], 45
+        je _atoi_neg
+        mov rbx, 0
+        mov r8, 1
+        jmp _atoi_loop
+_atoi_neg:
+        mov r8, -1
+        mov rbx, 1
+_atoi_loop:
+        mov cl, byte [rdi + rbx]
+        cmp cl, 48
+        jl _atoi_zero
+        sub cl, 48
+        mov rdx, 0
+        mov r9, 10
+        mul r9
+        add rax, rcx
+        inc rbx
+        jmp _atoi_loop
+_atoi_zero:
+        mul r8
 
-    ; Check for negative sign
-    movzx rsi, byte [rdi]
-    cmp rsi, '-'
-    jne .loop_start
-    mov rdx, -1
-    inc rcx  ; Skip '-'
-
-.loop_start:
-    movzx rsi, byte [rdi+rcx]
-    cmp rsi, '\0'
-    je .end
-
-    ; Check if character is a digit
-    cmp rsi, '0'
-    jl .end
-    cmp rsi, '9'
-    jg .end
-
-    ; Convert digit to integer and update result
-    sub rsi, '0'
-    imul rax, 10
-    add rax, rsi
-    inc rcx
-
-    ; Check for overflow (optional)
-    ; ...
-
-    jmp .loop_start
-
-.end:
-    imul rax, rdx  ; Apply sign
-    ret
+        ret

@@ -1,5 +1,5 @@
   section .data
-    num db "12345", 10, 0
+    num db "-12345", 10, 0
     
 
   section .text
@@ -42,12 +42,14 @@ atoi:
 	cmp byte [rdi], 45
 	je _atoi_neg
 	mov rbx, 0
+	mov r8, 1
+	jmp _atoi_loop
 _atoi_neg:
 	mov r8, -1
 	mov rbx, 1
 _atoi_loop:
-	mov rsi, [rdi + rbx]
-	cmp rsi, 48
+	mov sil, byte [rdi + rbx]
+	cmp sil, 48
 	jl _atoi_zero
 	sub rsi, 48
 	mov rdx, 0
@@ -55,6 +57,7 @@ _atoi_loop:
 	mul r9
 	add rax, rsi
 	inc rbx
+	jmp _atoi_loop
 _atoi_zero:
 	mul r8
 	
