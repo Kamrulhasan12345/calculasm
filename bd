@@ -1,0 +1,4 @@
+#!/bin/bash
+nasm -felf64 calculator.asm 
+ld calculator.o
+gdb -x calc.gdb -q a.out
