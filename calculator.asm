@@ -177,28 +177,59 @@ _printLoop:
 
 itoa:
 	cmp rdi, 0
-	jge _itoa_pos
-	neg rdi ; convert negative to positive
-	mov byte [rsi], '-' ;store the first byte as negative
-	mov rbx, 1
-	jmp _itoa_div
+	jg _itoa_pos
+	jl _itoa_neg
+	je _itoa_zero
 _itoa_pos:
 	mov rbx, 0
-_itoa_div:
+	mov r8, 0
+	jmp _itoa_loop
+_itoa_neg:
+	neg rdi
+	mov byte [rsi], '-'
+	mov rbx, 1
+	mov r8, 1
+	jmp _itoa_loop
+_itoa_zero:
+	mov byte [rsi], '0'
+	mov rbx, 1
+	jmp _itoa_ret
+_itoa_loop:
 	mov rdx, 0
 	mov rax, rdi
-	mov ecx, 10
-	div ecx
-	cmp rdx, 0 ;made a tragic mistake here
-	je _itoa_zero
+	mov rcx, 10
+	div rcx
 	add rdx, '0'
 	mov [rsi + rbx], rdx
 	inc rbx
 	mov rdi, rax
-	jmp _itoa_div
-_itoa_zero:
-	inc rbx
-	mov byte [rsi + rbx], 0
+	cmp rax, 0 ;compare number to zero, not remainder
+	; but has some problems as comparing it to zero before doing stuff
+        ; will not get the final digit
+	je _itoa_rev_i
+	jmp _itoa_loop
+_itoa_rev_i:
+	; I have: rdi, rcx, r8, r9, rax empty (Not needed anymore)
+	; cl will be i. problem is how to know if it should start from 1 or 0
+	; rdi will be rbx - i
+	mov rdi, rbx
+	dec rdi
+	add rdi, rsi
+	add r8, rsi
+_itoa_rev_s:
+	cmp r8, rdi
+	jge _itoa_ret
+	mov al, [r8]
+	mov cl, [rdi]
+	mov [r8], cl
+	mov [rdi], al
+	inc r8
+	dec rdi
+	jmp _itoa_rev_s
+_itoa_ret:
+	;inc rbx
+	mov byte [rsi + rbx], 10
+	mov byte [rsi + rbx + 1], 0
 
 	ret
 
@@ -216,7 +247,7 @@ _atoi_neg:
 _atoi_loop:
         mov cl, byte [rdi + rbx]
         cmp cl, 48
-        jl _atoi_zero
+        jl _atoi_ret
         sub cl, 48
         mov rdx, 0
         mov r9, 10
@@ -224,7 +255,7 @@ _atoi_loop:
         add rax, rcx
         inc rbx
         jmp _atoi_loop
-_atoi_zero:
+_atoi_ret:
         mul r8
 
         ret
